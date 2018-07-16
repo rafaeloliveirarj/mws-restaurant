@@ -2,7 +2,7 @@
  * Service Worker configurations
  */
 
-const APP_VERSION = 'v1';
+const APP_VERSION = 'v2';
 var staticCacheName = `mws-static-${APP_VERSION}`;
 var externalCacheName = `mws-external-${APP_VERSION}`;
 var imagesCacheName = `mws-images-${APP_VERSION}`;
@@ -62,7 +62,7 @@ self.addEventListener('fetch', function(event) {
         event.respondWith(caches.match('restaurant.html'));
         return;
       }
-      if (requestUrl.pathname.includes('.jpg') || requestUrl.pathname.includes('.png')) {
+      if (requestUrl.pathname.includes('.jpg') || requestUrl.pathname.includes('.png') || requestUrl.pathname.includes('.svg')) {
         //for images, first check the cache
         caches.match(requestUrl).then(function(response) {
           if (response) {

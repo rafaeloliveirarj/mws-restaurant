@@ -11,7 +11,7 @@ class DBHelper {
     //const port = 8000; // Change this to your server port
     const port = 1337; // Change this to your server port
     //return `http://localhost:${port}/data/restaurants.json`;
-    return `http://localhost:${port}/restaurants`;
+    return `http://localhost:${port}`;
   }
 
   static fetchRestaurantsFromCache() {
@@ -23,7 +23,7 @@ class DBHelper {
   }
 
   static fetchRestaurantsFromServer() {
-    return fetch(DBHelper.DATABASE_URL).then(function(response) {        
+    return fetch(`${DBHelper.DATABASE_URL}/restaurants`).then(function(response) {        
       return response.json().then(function(restaurantsFromServer) {
 
         //Cache the results
@@ -201,7 +201,28 @@ class DBHelper {
   }
 
   static setFavorite(restaurantId, isFavorite) {
-    alert(restaurantId, isFavorite);
-  }
 
+    //First try to update the server
+    return fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurantId}/?is_favorite=${isFavorite}`, { method: "PUT" })
+    .then(function(response) {
+      console.log('deu certo', response);
+      //if successfull, update cache
+      if (_db) {
+        var store = _db.transaction('restaurants', 'readwrite').objectStore('restaurants');
+        store.get(restaurantId).then(function(restaurantFromCache) {
+          restaurantFromCache.is_favorite = isFavorite;
+          store.put(restaurantFromCache);
+        });        
+      }
+    })
+    //if it fails, store the request to be tried later
+    .catch(function(response){
+      console.log('database offline, will try later', response);
+      if (_db) {
+        var store = _db.transaction('favoriteRequestQueue', 'readwrite').objectStore('favoriteRequestQueue');        
+        store.put({timestamp: Date.now(), restaurantId: restaurantId, isFavorite: isFavorite});
+      }
+      return false;
+    });
+  }
 }

@@ -185,18 +185,16 @@ createRestaurantHTML = (restaurant) => {
   more.href = DBHelper.urlForRestaurant(restaurant);
   li.append(more);
 
-  const favorite = document.createElement('img');
+  let favorite = document.createElement('img');
+  favorite.id = `fav-img_${restaurant.id}`;
   favorite.setAttribute('role','button');
   favorite.className = 'favorite-img';
-  favorite.setAttribute('onclick', `setFavorite(${restaurant.id}, ${!restaurant.is_favorite})`);
-
-  if (restaurant.is_favorite) {
-    favorite.setAttribute('src', 'dist/img/star_icon_on.svg');
-  } else {
-    favorite.setAttribute('src', 'dist/img/star_icon_off.svg');
-  }
-
   favorite.setAttribute('aria-labelledby', name.id);
+
+  console.log(restaurant);
+  favorite = revertFavoriteImage(favorite, restaurant.id, restaurant.is_favorite);
+  console.log(favorite);
+
   li.append(favorite);
 
   return li;
@@ -216,6 +214,26 @@ addMarkersToMap = (restaurants = self.restaurants) => {
   });
 }
 
-setFavorite = (restaurantId, isFavorite) => {
-  DBHelper.setFavorite(restaurantId, isFavorite);
+setFavorite = (restaurantIdA, isFavoriteA) => {
+  //update database
+  DBHelper.setFavorite(restaurantIdA, isFavoriteA);
+
+  //update UI
+  var favoriteImageElement = document.getElementById(`fav-img_${restaurantIdA}`);
+  revertFavoriteImage(favoriteImageElement, restaurantIdA, isFavoriteA);
+
+}
+
+revertFavoriteImage = (favoriteElement, restaurantIdB, isFavoriteB) => {
+
+  favoriteElement.setAttribute('onclick', `setFavorite(${restaurantIdB}, ${!isFavoriteB})`);
+  console.log(isFavoriteB, restaurantIdB);
+  if (isFavoriteB === true) {
+    console.log('poora', isFavoriteB, restaurantIdB);
+    favoriteElement.setAttribute('src', 'dist/img/star_icon_on.svg');
+  } else {
+    console.log('çaralho', isFavoriteB, restaurantIdB);
+    favoriteElement.setAttribute('src', 'dist/img/star_icon_off.svg');
+  }
+  return favoriteElement;
 }

@@ -6,13 +6,15 @@ var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var imagemin = require('gulp-imagemin');
 var pngquant = require('imagemin-pngquant');
-var  imageminMozjpeg = require('imagemin-mozjpeg');
+var imageminMozjpeg = require('imagemin-mozjpeg');
 
 gulp.task('default', ['style', 'images', 'scripts'],  defaultTask);
+gulp.task('mac', ['style', 'imagesMac', 'scripts'],  defaultTask);
 gulp.task('clean', cleanTask);
 gulp.task('scripts', scriptsTask);
 gulp.task('scripts-dist', scriptsDistTask);
 gulp.task('images', imagesTask);
+gulp.task('imagesMac', imagesMacTask);
 gulp.task('style', styleTask);
 
 function defaultTask(done) {
@@ -44,6 +46,7 @@ function imagesTask(){
 	gulp.src('img/*')
 		.pipe(gulp.dest('dist/img'));
 
+
 	gulp.src('img/photos/*.jpg')
  		.pipe(imagemin({
 			progressive: true,
@@ -51,8 +54,7 @@ function imagesTask(){
 		}))
 		.pipe(imagemin([imageminMozjpeg({
 			quality: 85
-	
-		})]))		
+		})]).on('error', function(error){console.log('ah porra', error)}))		
 		.pipe(gulp.dest('dist/img/photos'));
 
 	gulp.src('img/photos/thumbnails/*.jpg')
@@ -62,9 +64,14 @@ function imagesTask(){
 		}))
 		.pipe(imagemin([imageminMozjpeg({
 			quality: 50
-	
 		})]))		
-		.pipe(gulp.dest('dist/img/photos/thumbnails'));
+		.pipe(gulp.dest('dist/img/photos/thumbnails')); 
+}
+
+function imagesMacTask(){
+
+	gulp.src('img/**/*')
+		.pipe(gulp.dest('dist/img'));
 }
 
 function styleTask(){
