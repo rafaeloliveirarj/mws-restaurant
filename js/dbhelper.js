@@ -200,4 +200,8 @@ class DBHelper {
     return marker;
   }
 
+  static setFavorite(restaurantId, isFavorite) {
+    alert(restaurantId, isFavorite);
+  }
+
 }

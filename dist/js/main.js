@@ -183,9 +183,23 @@ createRestaurantHTML = (restaurant) => {
   more.innerHTML = 'View Details';
   more.setAttribute('aria-labelledby', name.id);
   more.href = DBHelper.urlForRestaurant(restaurant);
-  li.append(more)
+  li.append(more);
 
-  return li
+  const favorite = document.createElement('img');
+  favorite.setAttribute('role','button');
+  favorite.className = 'favorite-img';
+  favorite.setAttribute('onclick', `setFavorite(${restaurant.id}, ${!restaurant.is_favorite})`);
+
+  if (restaurant.is_favorite) {
+    favorite.setAttribute('src', 'dist/img/star_icon_on.svg');
+  } else {
+    favorite.setAttribute('src', 'dist/img/star_icon_off.svg');
+  }
+
+  favorite.setAttribute('aria-labelledby', name.id);
+  li.append(favorite);
+
+  return li;
 }
 
 /**
@@ -200,4 +214,8 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     });
     self.markers.push(marker);
   });
+}
+
+setFavorite = (restaurantId, isFavorite) => {
+  DBHelper.setFavorite(restaurantId, isFavorite);
 }
