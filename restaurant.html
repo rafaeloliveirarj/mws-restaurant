@@ -60,6 +60,27 @@
     <!-- Beginning reviews -->
     <section id="reviews-container">
       <ul id="reviews-list"></ul>
+      <div>
+        <form id="addReviewForm">
+
+          <span>Name: </span>
+          <input type="text" id="userName" placeholder="What's your name?"/>
+          
+          <span>Rating: </span>
+          <select type="number" min="0" max="5" value="5" id="rating">
+            <option value="0">0 - I hate it!</option>
+            <option value="1">1 - Didn't like it</option>
+            <option value="2">2 - Could be better</option>
+            <option value="3">3 - Ok</option>
+            <option value="4">4 - Good</option>
+            <option value="5" selected>5 - I love it!</option>
+          </select>
+          
+          <span>Comments: </span>
+          <textarea id="comments" placeholder="Did you like it? Tell us more about it." cols="30" rows="5"></textarea>
+        </form>
+        <a role="button" onclick="addReview()">Send your review</a>
+      </div>
     </section>
     <!-- End reviews -->
   </main>
@@ -75,14 +96,13 @@
   <script type="application/javascript" charset="utf-8" src="dist/js/idb.js"></script>
 
   <!-- Beginning scripts -->
-  <script type="application/javascript" charset="utf-8" src="sw.js"></script>
   <script type="application/javascript" charset="utf-8" src="dist/js/scheduler.js"></script>
   <script type="application/javascript" charset="utf-8" src="dist/js/dbhelper.js"></script>
   <script type="application/javascript" charset="utf-8" src="dist/js/restaurant_info.js"></script>
   <!-- Google Maps -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCpOS0fLi4JISp3kekVBcJGvzkXvgM1KZw&libraries=places&callback=initMapRestaurant"></script>
   <!-- End scripts -->
-
+  <script type="application/javascript" charset="utf-8" src="sw.js"></script>
 </body>
 
 </html>

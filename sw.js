@@ -12,6 +12,8 @@ const GOOGLE_MAPS_COMMON_URL = 'https://maps.googleapis.com/maps-api-v3/api/js/3
 const GOOGLE_MAPS_UTIL_URL = 'https://maps.googleapis.com/maps-api-v3/api/js/33/6a/util.js';
 const GOOGLE_MAPS_MAP_URL = 'https://maps.googleapis.com/maps-api-v3/api/js/33/6a/map.js';
 
+const DATABASE_URL = `http://localhost:1337`;
+
 var allCaches = [staticCacheName, externalCacheName, imagesCacheName];
 
 self.addEventListener('install', function(event) {
@@ -54,8 +56,14 @@ self.addEventListener('fetch', function(event) {
 
     //Don't intercept PUTs and POSTs
     if(event.request.method == 'PUT' || event.request.method == 'POST') {
-      return fetch(event.request);
+      return;
     }
+
+    //Don't intercept calls to the JSON server
+    if(event.request.url.includes(DATABASE_URL)) {
+      return;
+    }
+
     //Always serve local content from cache
     if (requestUrl.origin === location.origin) {      
       if (requestUrl.pathname === '/') {

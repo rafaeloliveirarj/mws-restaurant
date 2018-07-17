@@ -1,4 +1,5 @@
 let restaurant;
+let reviews;
 var map;
 
 /**
@@ -15,7 +16,12 @@ window.initMapRestaurant = () => {
         scrollwheel: false
       });
       fillBreadcrumb();
+
       DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
+
+      fetchReviewsFromURL((error, reviews) => {
+        console.log('TODO fetchReviewsFromURL response?');
+      });
     }
   });
 }
@@ -46,12 +52,50 @@ fetchRestaurantFromURL = (callback) => {
 }
 
 /**
+ * Get current restaurant from page URL.
+ */
+fetchReviewsFromURL = (callback) => {
+  if (self.reviews) { // reviews already fetched!
+    callback(null, self.reviews);
+    return;
+  }
+  const id = getParameterByName('id');
+  if (!id) { // no id found in URL
+    error = 'No restaurant id in URL'
+    callback(error, null);
+  } else {
+    DBHelper.fetchReviewsByRestaurantId(id, (error, reviews) => {
+      self.reviews = reviews;
+      if (!reviews) {
+        console.error(error);
+        return;
+      }
+      fillReviewsHTML();
+      callback(null, reviews)
+    });
+  }
+}
+
+/**
  * Create restaurant HTML and add it to the webpage
  */
 fillRestaurantHTML = (restaurant = self.restaurant) => {
-  const name = document.getElementById('restaurant-name');
-  name.id = `title_${restaurant.id}`;
-  name.innerHTML = restaurant.name;
+  const nameHeader = document.getElementById('restaurant-name');
+  nameHeader.nameHeader = `title_${restaurant.id}`;
+
+  let favorite = document.createElement('img');
+  favorite.id = `fav-img_${restaurant.id}`;
+  favorite.setAttribute('role','button');
+  favorite.className = 'favorite-img';
+
+  revertFavoriteImage(favorite, restaurant.id, restaurant.is_favorite);
+
+  nameHeader.appendChild(favorite);
+
+  const name = document.createElement('span');
+  name.innerHTML = restaurant.name;  
+
+  nameHeader.appendChild(name);
 
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
@@ -72,8 +116,6 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   if (restaurant.operating_hours) {
     fillRestaurantHoursHTML();
   }
-  // fill reviews
-  fillReviewsHTML();
 }
 
 /**
@@ -99,7 +141,7 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+fillReviewsHTML = (reviews = self.reviews) => {
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
@@ -129,7 +171,7 @@ createReviewHTML = (review) => {
   li.appendChild(name);
 
   const date = document.createElement('p');
-  date.innerHTML = review.date;
+  date.innerHTML = (new Date(review.createdAt)).toLocaleDateString();
   li.appendChild(date);
 
   const rating = document.createElement('p');
@@ -171,4 +213,55 @@ getParameterByName = (name, url) => {
   if (!results[2])
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+setFavorite = (restaurantId, isFavorite) => {
+  //update database
+  DBHelper.setFavorite(restaurantId, isFavorite);
+
+  //update UI
+  var favoriteImageElement = document.getElementById(`fav-img_${restaurantId}`);
+  revertFavoriteImage(favoriteImageElement, restaurantId, isFavorite);
+
+}
+
+revertFavoriteImage = (favoriteElement, restaurantId, isFavorite) => {
+  
+  if (typeof isFavorite == 'string') {
+    isFavorite = (isFavorite === 'true');
+  }
+
+  favoriteElement.setAttribute('onclick', `setFavorite(${restaurantId}, ${!isFavorite})`);
+  if (isFavorite) {
+    favoriteElement.setAttribute('src', 'dist/img/star_icon_on.svg');
+  } else {
+    favoriteElement.setAttribute('src', 'dist/img/star_icon_off.svg');
+  }
+}
+
+addReview = () => {
+
+  let form = document.getElementById("addReviewForm");
+
+   if (!formIsValid(form)) {
+    window.alert('Please fill all the fields');
+    return;
+  }
+
+  let review = {
+    restaurant_id: self.restaurant.id,
+    name: form['userName'].value,
+    rating: form['rating'].value,
+    comments: form['comments'].value
+  }
+
+  //update database
+  DBHelper.addReview(review);
+}
+
+formIsValid = (form) => {
+  if (form['userName'].value == '') return false;
+  if (form['rating'].value == '') return false;
+  if (form['comments'].value == '') return false;
+  return true;
 }

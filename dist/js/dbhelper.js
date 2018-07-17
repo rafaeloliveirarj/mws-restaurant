@@ -75,7 +75,7 @@ class DBHelper {
       }
     });
   }
-
+  
   /**
    * Fetch restaurants by a cuisine type with proper error handling.
    */
@@ -166,6 +166,29 @@ class DBHelper {
   }
 
   /**
+   * Fetch a review by its Restaurant ID.
+   */
+  static fetchReviewsByRestaurantId(restaurantId, callback) {
+    return fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${restaurantId}`).then(function(response) {        
+      return response.json().then(function(reviewsFromServer) {
+
+        //Cache the results
+        if (_db) {
+          var reviewsStore = _db.transaction('reviews', 'readwrite').objectStore('reviews');        
+          reviewsFromServer.forEach(function (review) {
+            reviewsStore.put(review);
+          });
+        }
+        callback(null, reviewsFromServer);
+        return reviewsFromServer;
+      })
+    }).catch(function(errorResponse){
+      const error = (`Request failed. Returned status of ${errorResponse}`);
+      callback(error, null);
+    });    
+  }  
+
+  /**
    * Restaurant page URL.
    */
   static urlForRestaurant(restaurant) {
@@ -202,26 +225,42 @@ class DBHelper {
 
   static setFavorite(restaurantId, isFavorite) {
 
-    //First try to update the server
-    return fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurantId}/?is_favorite=${isFavorite}`, { method: "PUT" })
-    .then(function(response) {
-      //if successfull, update cache
-      if (_db) {
-        var store = _db.transaction('restaurants', 'readwrite').objectStore('restaurants');
-        store.get(restaurantId).then(function(restaurantFromCache) {
-          restaurantFromCache.is_favorite = isFavorite;
-          store.put(restaurantFromCache);
-        });        
-      }
-    })
-    //if it fails, store the request to be tried later
-    .catch(function(response){
-      console.log('database offline, adding \'update favorite\' request to queue', response);
-      if (_db) {
-        var store = _db.transaction('favoriteRequestQueue', 'readwrite').objectStore('favoriteRequestQueue');        
-        store.put({timestamp: Date.now(), restaurantId: restaurantId, isFavorite: isFavorite});
-      }
-      return false;
-    });
+    //First update cache
+    var store = _db.transaction('restaurants', 'readwrite').objectStore('restaurants');
+
+    return store.get(restaurantId).then(function(restaurantFromCache) {
+
+      restaurantFromCache.is_favorite = isFavorite;
+
+      return store.put(restaurantFromCache).then(function() {
+
+        //First try to update the server
+        return fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurantId}/?is_favorite=${isFavorite}`, { method: "PUT" })
+        .then(function(response) {
+          console.log('server updated');
+          return;
+        })
+        //if it fails, store the request to be tried later
+        .catch(function(response){
+          console.log('database offline, adding \'update favorite\' request to queue', response);
+          if (_db) {
+            var store = _db.transaction('favoriteRequestQueue', 'readwrite').objectStore('favoriteRequestQueue');        
+            store.put({timestamp: Date.now(), restaurantId: restaurantId, isFavorite: isFavorite});
+          }
+        });          
+      });
+    });        
+  }
+
+  static addReview(review) {
+    console.log('sending to server', review);
+    return fetch(`${DBHelper.DATABASE_URL}/reviews`, { method: "POST", body: JSON.stringify(review) })
+      .then(function(response){
+        console.log('ok', response);
+      })
+      .catch(function(error){
+        console.log('error', error);
+      })
   }
 }
+
