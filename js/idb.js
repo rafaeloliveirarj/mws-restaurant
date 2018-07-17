@@ -9,7 +9,7 @@ var dbPromise = idb.open('mws-db', 3, function(upgradeDb) {
 			upgradeDb.createObjectStore('favoriteRequestQueue', {keyPath: 'timestamp'});
 			upgradeDb.createObjectStore('reviewRequestQueue', {keyPath: 'timestamp'});
 		case 2:
-			upgradeDb.createObjectStore('reviews', {keyPath: 'id'});
+			upgradeDb.createObjectStore('reviews', {keyPath: 'idbInternalKey', autoIncrement:true});
 	}
 }).then(function(database) {
 	if(!database) return;

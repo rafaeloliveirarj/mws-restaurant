@@ -234,7 +234,7 @@ class DBHelper {
 
       return store.put(restaurantFromCache).then(function() {
 
-        //First try to update the server
+        //try to update the server
         return fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurantId}/?is_favorite=${isFavorite}`, { method: "PUT" })
         .then(function(response) {
           console.log('server updated');
@@ -253,14 +253,26 @@ class DBHelper {
   }
 
   static addReview(review) {
-    console.log('sending to server', review);
-    return fetch(`${DBHelper.DATABASE_URL}/reviews`, { method: "POST", body: JSON.stringify(review) })
-      .then(function(response){
-        console.log('ok', response);
+
+    //First update cache
+    var store = _db.transaction('reviews', 'readwrite').objectStore('reviews');
+    return store.put(review).then(function() {
+
+      //try to update the server
+      return fetch(`${DBHelper.DATABASE_URL}/reviews`, { method: "POST", body: JSON.stringify(review) })
+      .then(function(response) {
+        console.log('server updated');
+        return;
       })
-      .catch(function(error){
-        console.log('error', error);
-      })
+      //if it fails, store the request to be tried later
+      .catch(function(response){
+        console.log('database offline, adding \'add review\' request to queue', response);
+        if (_db) {
+          var store = _db.transaction('reviewRequestQueue', 'readwrite').objectStore('reviewRequestQueue');        
+          store.put({timestamp: Date.now(), review});
+        }
+      });          
+    });
   }
 }
 
