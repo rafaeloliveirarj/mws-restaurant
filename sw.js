@@ -2,7 +2,7 @@
  * Service Worker configurations
  */
 
-const APP_VERSION = 'v2';
+const APP_VERSION = 'v1';
 var staticCacheName = `mws-static-${APP_VERSION}`;
 var externalCacheName = `mws-external-${APP_VERSION}`;
 var imagesCacheName = `mws-images-${APP_VERSION}`;
@@ -14,44 +14,48 @@ const GOOGLE_MAPS_MAP_URL = 'https://maps.googleapis.com/maps-api-v3/api/js/33/6
 
 var allCaches = [staticCacheName, externalCacheName, imagesCacheName];
 
+self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open(staticCacheName).then(function(cache) {
+      return cache.addAll([
+        'sw.js',
+        'index.html',
+        'restaurant.html',
+        'dist/js/dbhelper.js',
+        'dist/js/idb.js',
+        'dist/js/scheduler.js',
+        'dist/js/main.js',
+        'dist/js/restaurant_info.js',
+        'dist/js/vendor/idb.js',
+        'dist/css/breakpoints.css',
+        'dist/css/styles.css'
+      ])
+    })
+  );
+}); 
 
-  self.addEventListener('install', function(event) {
-    event.waitUntil(
-      caches.open(staticCacheName).then(function(cache) {
-        return cache.addAll([
-          'sw.js',
-          'index.html',
-          'restaurant.html',
-          'dist/js/dbhelper.js',
-          'dist/js/idb.js',
-          'dist/js/main.js',
-          'dist/js/restaurant_info.js',
-          'dist/js/vendor/idb.js',
-          'dist/css/breakpoints.css',
-          'dist/css/styles.css'
-        ])
-      })
-    );
-  });
-
-  self.addEventListener('activate', function(event) {
-    event.waitUntil(
-      caches.keys().then(function(cacheNames) {
-        return Promise.all(
-          cacheNames.filter(function(cacheName) {
-            return cacheName.startsWith('mws-') &&
-                   !allCaches.includes(cacheName);
-          }).map(function(cacheName) {
-            return caches.delete(cacheName);
-          })
-        );
-      })
-    );
-  });
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.filter(function(cacheName) {
+          return cacheName.startsWith('mws-') &&
+                  !allCaches.includes(cacheName);
+        }).map(function(cacheName) {
+          return caches.delete(cacheName);
+        })
+      );
+    })
+  );
+});
 
 self.addEventListener('fetch', function(event) {
     var requestUrl = new URL(event.request.url);
 
+    //Don't intercept PUTs and POSTs
+    if(event.request.method == 'PUT' || event.request.method == 'POST') {
+      return fetch(event.request);
+    }
     //Always serve local content from cache
     if (requestUrl.origin === location.origin) {      
       if (requestUrl.pathname === '/') {

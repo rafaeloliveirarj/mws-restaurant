@@ -18,6 +18,10 @@ gulp.task('imagesMac', imagesMacTask);
 gulp.task('style', styleTask);
 
 function defaultTask(done) {
+
+	gulp.watch('css/*.scss', function() { gulp.run('style'); });
+	gulp.watch('js/**/*.js', function() { gulp.run('scripts'); });
+	gulp.watch('img/**/*', function() { gulp.run('images'); });
 	done();
 }
 

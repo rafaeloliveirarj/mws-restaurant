@@ -205,7 +205,6 @@ class DBHelper {
     //First try to update the server
     return fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurantId}/?is_favorite=${isFavorite}`, { method: "PUT" })
     .then(function(response) {
-      console.log('deu certo', response);
       //if successfull, update cache
       if (_db) {
         var store = _db.transaction('restaurants', 'readwrite').objectStore('restaurants');
@@ -217,7 +216,7 @@ class DBHelper {
     })
     //if it fails, store the request to be tried later
     .catch(function(response){
-      console.log('database offline, will try later', response);
+      console.log('database offline, adding \'update favorite\' request to queue', response);
       if (_db) {
         var store = _db.transaction('favoriteRequestQueue', 'readwrite').objectStore('favoriteRequestQueue');        
         store.put({timestamp: Date.now(), restaurantId: restaurantId, isFavorite: isFavorite});
