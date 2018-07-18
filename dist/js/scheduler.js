@@ -7,8 +7,8 @@ const interval = setInterval(() => {
 
 	//Check if there's any pending request to update favorite restaurants
     if (_db) {
-		var storeReviews = _db.transaction('favoriteRequestQueue', 'readwrite').objectStore('favoriteRequestQueue');
-		storeReviews.getAll().then(function(requests) {
+		var storeFavorites = _db.transaction('favoriteRequestQueue', 'readwrite').objectStore('favoriteRequestQueue');
+		storeFavorites.getAll().then(function(requests) {
 
 			if (requests.length > 0) {
 				console.log(`Found ${requests.length} 'update favorite' requests queued. Will try to sync with server...`);
@@ -19,7 +19,7 @@ const interval = setInterval(() => {
 						DBHelper.setFavorite(request.restaurantId, request.isFavorite).then(function(response){
 							console.log('Restaurant updated');
 						})
-						storeReviews.delete(request.timestamp);
+						storeFavorites.delete(request.timestamp);
 					});
 				} else {
 					console.log('Server still down.');
@@ -36,7 +36,7 @@ const interval = setInterval(() => {
 				if(navigator.onLine) {
 					console.log('Connection restablished.')
 					requests.forEach(request => {
-						DBHelper.setFavorite(request.restaurantId, request.isFavorite).then(function(response){
+						DBHelper.addReview(request.review).then(function(response){
 							console.log('Review added');
 						})
 						storeReviews.delete(request.timestamp);

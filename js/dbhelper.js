@@ -169,22 +169,36 @@ class DBHelper {
    * Fetch a review by its Restaurant ID.
    */
   static fetchReviewsByRestaurantId(restaurantId, callback) {
+
+    //First fetch from server
     return fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${restaurantId}`).then(function(response) {        
       return response.json().then(function(reviewsFromServer) {
 
         //Cache the results
         if (_db) {
-          var reviewsStore = _db.transaction('reviews', 'readwrite').objectStore('reviews');        
+          let reviewsStore = _db.transaction('reviews', 'readwrite').objectStore('reviews');   
+          let reviewIndex = reviewsStore.index('serverId');    
           reviewsFromServer.forEach(function (review) {
-            reviewsStore.put(review);
+
+            //check if the review is already in cache. If it is, update it. If not, add it
+            reviewIndex.get(IDBKeyRange.only(review.id)).then(function(reviewFromCache) {
+
+              if(reviewFromCache) {
+                review.idbInternalKey = reviewFromCache.idbInternalKey;
+              }
+              reviewsStore.put(review);
+            })
           });
         }
         callback(null, reviewsFromServer);
         return reviewsFromServer;
       })
+    //if server is offline, fetch from cache
     }).catch(function(errorResponse){
-      const error = (`Request failed. Returned status of ${errorResponse}`);
-      callback(error, null);
+      let reviewsIndex = _db.transaction('reviews', 'readwrite').objectStore('reviews').index('restaurantId');
+      reviewsIndex.getAll(parseInt(restaurantId)).then(function(reviewsFromCache) {
+        callback(null, reviewsFromCache);
+      })
     });    
   }  
 
@@ -254,21 +268,29 @@ class DBHelper {
 
   static addReview(review) {
 
+    //set creation time
+    review.createdAt = new Date();
+
     //First update cache
-    var store = _db.transaction('reviews', 'readwrite').objectStore('reviews');
-    return store.put(review).then(function() {
+    let store = _db.transaction('reviews', 'readwrite').objectStore('reviews');
+    return store.put(review).then(function(idbInternalKey) {
 
       //try to update the server
       return fetch(`${DBHelper.DATABASE_URL}/reviews`, { method: "POST", body: JSON.stringify(review) })
-      .then(function(response) {
-        console.log('server updated');
-        return;
+      .then(function(reviewFromServer) {
+        //If success, update cache with object generated from the server
+        return reviewFromServer.json().then(function(reviewFromServer) {
+          reviewFromServer.idbInternalKey = idbInternalKey;
+          let store = _db.transaction('reviews', 'readwrite').objectStore('reviews');
+          return store.put(reviewFromServer);
+        })
       })
-      //if it fails, store the request to be tried later
+      //if it fails, store the request to be retried later
       .catch(function(response){
         console.log('database offline, adding \'add review\' request to queue', response);
         if (_db) {
-          var store = _db.transaction('reviewRequestQueue', 'readwrite').objectStore('reviewRequestQueue');        
+          let store = _db.transaction('reviewRequestQueue', 'readwrite').objectStore('reviewRequestQueue');  
+          review.idbInternalKey = idbInternalKey;      
           store.put({timestamp: Date.now(), review});
         }
       });          

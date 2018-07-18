@@ -9,7 +9,7 @@ var pngquant = require('imagemin-pngquant');
 var imageminMozjpeg = require('imagemin-mozjpeg');
 
 gulp.task('default', ['style', 'images', 'scripts'],  defaultTask);
-gulp.task('mac', ['style', 'imagesMac', 'scripts'],  defaultTask);
+gulp.task('mac', ['style', 'imagesMac', 'scripts'],  macTask);
 gulp.task('clean', cleanTask);
 gulp.task('scripts', scriptsTask);
 gulp.task('scripts-dist', scriptsDistTask);
@@ -18,6 +18,14 @@ gulp.task('imagesMac', imagesMacTask);
 gulp.task('style', styleTask);
 
 function defaultTask(done) {
+
+	gulp.watch('css/*.scss', function() { gulp.run('style'); });
+	gulp.watch('js/**/*.js', function() { gulp.run('scripts'); });
+	gulp.watch('img/**/*', function() { gulp.run('images'); });
+	done();
+}
+
+function macTask(done) {
 
 	gulp.watch('css/*.scss', function() { gulp.run('style'); });
 	gulp.watch('js/**/*.js', function() { gulp.run('scripts'); });
