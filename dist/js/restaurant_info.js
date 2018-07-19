@@ -65,6 +65,14 @@ fetchReviewsFromURL = (callback) => {
     callback(error, null);
   } else {
     DBHelper.fetchReviewsByRestaurantId(id, (error, reviews) => {
+
+      //sorte reviews order by creation date desc
+      reviews.sort((a,b) => {
+        let dateA = new Date(a.createdAt);
+        let dateB = new Date(b.createdAt);
+        return dateA>dateB ? -1 : dateA<dateB ? 1 : 0;
+      });
+
       self.reviews = reviews;
       if (!reviews) {
         console.error(error);
@@ -145,7 +153,7 @@ fillReviewsHTML = (reviews = self.reviews) => {
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
-  container.appendChild(title);
+  container.insertAdjacentElement('afterbegin', title);
 
   if (!reviews) {
     const noReviews = document.createElement('p');
@@ -157,7 +165,12 @@ fillReviewsHTML = (reviews = self.reviews) => {
   reviews.forEach(review => {
     ul.appendChild(createReviewHTML(review));
   });
-  container.appendChild(ul);
+  container.insertAdjacentElement('beforeend', ul);
+}
+
+injectReviewHTML = (review) => {
+  const ul = document.getElementById('reviews-list');
+  ul.insertAdjacentElement('afterbegin', createReviewHTML(review));
 }
 
 /**
@@ -166,6 +179,7 @@ fillReviewsHTML = (reviews = self.reviews) => {
 createReviewHTML = (review) => {
   const li = document.createElement('li');
   const name = document.createElement('p');
+  name.style = "font-weight: bold";
   name.innerHTML = review.name;
   name.setAttribute('role', 'h3');
   li.appendChild(name);
@@ -256,7 +270,13 @@ addReview = () => {
   }
 
   //update database
-  DBHelper.addReview(review);
+  console.log(DBHelper.addReview(review));
+  injectReviewHTML(review);
+
+  //clean form
+  form['userName'].value = "";
+  form['rating'].value = "5";
+  form['comments'].value = "";
 }
 
 formIsValid = (form) => {
@@ -265,3 +285,4 @@ formIsValid = (form) => {
   if (form['comments'].value == '') return false;
   return true;
 }
+

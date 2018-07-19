@@ -2,7 +2,7 @@
  * Service Worker configurations
  */
 
-const APP_VERSION = 'v1';
+const APP_VERSION = 'v2';
 var staticCacheName = `mws-static-${APP_VERSION}`;
 var externalCacheName = `mws-external-${APP_VERSION}`;
 var imagesCacheName = `mws-images-${APP_VERSION}`;

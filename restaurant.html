@@ -59,28 +59,34 @@
 
     <!-- Beginning reviews -->
     <section id="reviews-container">
-      <ul id="reviews-list"></ul>
-      <div>
         <form id="addReviewForm">
-
-          <span>Name: </span>
-          <input type="text" id="userName" placeholder="What's your name?"/>
-          
-          <span>Rating: </span>
-          <select type="number" min="0" max="5" value="5" id="rating">
-            <option value="0">0 - I hate it!</option>
-            <option value="1">1 - Didn't like it</option>
-            <option value="2">2 - Could be better</option>
-            <option value="3">3 - Ok</option>
-            <option value="4">4 - Good</option>
-            <option value="5" selected>5 - I love it!</option>
-          </select>
-          
-          <span>Comments: </span>
-          <textarea id="comments" placeholder="Did you like it? Tell us more about it." cols="30" rows="5"></textarea>
-        </form>
-        <a role="button" onclick="addReview()">Send your review</a>
-      </div>
+          <div id="form-container">
+            <div>
+                <label id="nameLabel">Name: </label>
+                <input type="text" id="userName" placeholder="What's your name?" aria-labelledby="nameLabel"/>
+            </div>
+            
+            <div>
+              <label id="ratingLabel">Rating: </label>
+              <select type="number" min="0" max="5" value="5" id="rating" aria-labelledby="ratingLabel">
+                <option value="0">0 - I hate it!</option>
+                <option value="1">1 - Didn't like it</option>
+                <option value="2">2 - Could be better</option>
+                <option value="3">3 - Ok</option>
+                <option value="4">4 - Good</option>
+                <option value="5" selected>5 - I love it!</option>
+              </select>
+            </div>
+            <div>
+                <label id="commentsLabel">Comments: </label>
+                <textarea id="comments" aria-labelledby="commentsLabel" placeholder="Did you like it? Tell us more about it." cols="50" rows="1"></textarea>
+            </div>
+            <div>
+              <a role="button" onclick="addReview()">Send your review</a>          
+            </div>
+        </div>
+      </form>
+      <ul id="reviews-list"></ul>
     </section>
     <!-- End reviews -->
   </main>
