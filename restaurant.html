@@ -61,29 +61,17 @@
     <section id="reviews-container">
         <form id="addReviewForm">
           <div id="form-container">
-            <div>
-                <label id="nameLabel">Name: </label>
-                <input type="text" id="userName" placeholder="What's your name?" aria-labelledby="nameLabel"/>
-            </div>
-            
-            <div>
-              <label id="ratingLabel">Rating: </label>
-              <select type="number" min="0" max="5" value="5" id="rating" aria-labelledby="ratingLabel">
-                <option value="0">0 - I hate it!</option>
-                <option value="1">1 - Didn't like it</option>
-                <option value="2">2 - Could be better</option>
-                <option value="3">3 - Ok</option>
-                <option value="4">4 - Good</option>
-                <option value="5" selected>5 - I love it!</option>
-              </select>
-            </div>
-            <div>
-                <label id="commentsLabel">Comments: </label>
-                <textarea id="comments" aria-labelledby="commentsLabel" placeholder="Did you like it? Tell us more about it." cols="50" rows="1"></textarea>
-            </div>
-            <div>
-              <a role="button" onclick="addReview()">Send your review</a>          
-            </div>
+            <input type="text" id="userName" placeholder="What's your name?" aria-label="name"/>
+            <select type="number" min="0" max="5" value="5" id="rating" aria-label="rating">
+              <option value="0">0 - I hate it!</option>
+              <option value="1">1 - Didn't like it</option>
+              <option value="2">2 - Could be better</option>
+              <option value="3">3 - Ok</option>
+              <option value="4">4 - Good</option>
+              <option value="5" selected>5 - I love it!</option>
+            </select>
+            <textarea id="comments" aria-label="comments" placeholder="Did you like it? Tell us more about it." cols="50" rows="1"></textarea>
+            <a role="button" onclick="addReview()">Send your review</a>          
         </div>
       </form>
       <ul id="reviews-list"></ul>

@@ -23,7 +23,6 @@
   <main id="maincontent">
 
     <section id="map-container">
-      <div id="map" role="application"></div>
     </section>
 
     <section>
@@ -35,6 +34,7 @@
         <select id="cuisines-select" name="cuisines" aria-label="cuisines" onchange="updateRestaurants()">
           <option value="all">All Cuisines</option>
         </select>
+        <input type="checkbox" id="showMap-checkbox" name="showMap" aria-labelledby="showMapLabel" onchange="toggleMap()"/><label id="showMapLabel">Show results on map</label>
       </div>
       <ul id="restaurants-list"></ul>
     </section>

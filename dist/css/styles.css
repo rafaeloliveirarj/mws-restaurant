@@ -121,6 +121,11 @@ header h1 a {
   margin: 10px;
   padding: 0 10px; }
 
+.filter-options #showMapLabel {
+  font-family: Arial,sans-serif;
+  color: white;
+  letter-spacing: 0; }
+
 /* ====================== Restaurant Listing ====================== */
 #restaurants-list {
   background-color: #f3f3f3;
@@ -253,23 +258,39 @@ header h1 a {
   color: #666; }
 
 .favorite-img {
+  margin-left: 20px;
+  margin-right: 20px;
   border: none;
   background-color: #fff;
   max-width: 30px;
   min-width: 30px; }
 
-#reviews-container a {
-  background-color: #f18200;
-  border-bottom: 3px solid #eee;
-  color: #fff;
-  display: inline-block;
-  font-size: 10pt;
-  padding: 8px 30px 10px;
-  text-align: center;
-  text-decoration: none;
-  text-transform: uppercase; }
-
 #form-container {
   width: 100%;
   display: flex;
   flex-wrap: wrap; }
+  #form-container select, #form-container input, #form-container textarea {
+    background-color: white;
+    border: 1px solid #fff;
+    font-family: Arial,sans-serif;
+    letter-spacing: 0;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    padding: 0 10px;
+    height: 35px;
+    min-width: 200px; }
+  #form-container a {
+    background-color: #f18200;
+    border-bottom: 3px solid #eee;
+    color: #fff;
+    display: inline-block;
+    font-size: 10pt;
+    padding-top: 12px;
+    padding-right: 8px;
+    padding-left: 8px;
+    height: 30px;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase; }
+  #form-container a:hover {
+    cursor: pointer; }
