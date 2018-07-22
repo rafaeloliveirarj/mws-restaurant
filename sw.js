@@ -12,45 +12,57 @@ const GOOGLE_MAPS_COMMON_URL = 'https://maps.googleapis.com/maps-api-v3/api/js/3
 const GOOGLE_MAPS_UTIL_URL = 'https://maps.googleapis.com/maps-api-v3/api/js/33/6a/util.js';
 const GOOGLE_MAPS_MAP_URL = 'https://maps.googleapis.com/maps-api-v3/api/js/33/6a/map.js';
 
+const DATABASE_URL = `http://localhost:1337`;
+
 var allCaches = [staticCacheName, externalCacheName, imagesCacheName];
 
+self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open(staticCacheName).then(function(cache) {
+      return cache.addAll([
+        'sw.js',
+        'index.html',
+        'restaurant.html',
+        'dist/js/dbhelper.js',
+        'dist/js/idb.js',
+        'dist/js/scheduler.js',
+        'dist/js/main.js',
+        'dist/js/restaurant_info.js',
+        'dist/js/vendor/idb.js',
+        'dist/css/breakpoints.css',
+        'dist/css/styles.css'
+      ])
+    })
+  );
+}); 
 
-  self.addEventListener('install', function(event) {
-    event.waitUntil(
-      caches.open(staticCacheName).then(function(cache) {
-        return cache.addAll([
-          'sw.js',
-          'index.html',
-          'restaurant.html',
-          'dist/js/dbhelper.js',
-          'dist/js/idb.js',
-          'dist/js/main.js',
-          'dist/js/restaurant_info.js',
-          'dist/js/vendor/idb.js',
-          'dist/css/breakpoints.css',
-          'dist/css/styles.css'
-        ])
-      })
-    );
-  });
-
-  self.addEventListener('activate', function(event) {
-    event.waitUntil(
-      caches.keys().then(function(cacheNames) {
-        return Promise.all(
-          cacheNames.filter(function(cacheName) {
-            return cacheName.startsWith('mws-') &&
-                   !allCaches.includes(cacheName);
-          }).map(function(cacheName) {
-            return caches.delete(cacheName);
-          })
-        );
-      })
-    );
-  });
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.filter(function(cacheName) {
+          return cacheName.startsWith('mws-') &&
+                  !allCaches.includes(cacheName);
+        }).map(function(cacheName) {
+          return caches.delete(cacheName);
+        })
+      );
+    })
+  );
+});
 
 self.addEventListener('fetch', function(event) {
     var requestUrl = new URL(event.request.url);
+
+    //Don't intercept PUTs and POSTs
+    if(event.request.method == 'PUT' || event.request.method == 'POST') {
+      return;
+    }
+
+    //Don't intercept calls to the JSON server
+    if(event.request.url.includes(DATABASE_URL)) {
+      return;
+    }
 
     //Always serve local content from cache
     if (requestUrl.origin === location.origin) {      
@@ -62,7 +74,7 @@ self.addEventListener('fetch', function(event) {
         event.respondWith(caches.match('restaurant.html'));
         return;
       }
-      if (requestUrl.pathname.includes('.jpg') || requestUrl.pathname.includes('.png')) {
+      if (requestUrl.pathname.includes('.jpg') || requestUrl.pathname.includes('.png') || requestUrl.pathname.includes('.svg')) {
         //for images, first check the cache
         caches.match(requestUrl).then(function(response) {
           if (response) {

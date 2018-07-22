@@ -1,20 +1,41 @@
 var gulp = require('gulp');
-const babel = require('gulp-babel');
+var gulpClean = require('gulp-clean');
+var babel = require('gulp-babel');
 var sass = require('gulp-sass');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var imagemin = require('gulp-imagemin');
 var pngquant = require('imagemin-pngquant');
-const imageminMozjpeg = require('imagemin-mozjpeg');
+var imageminMozjpeg = require('imagemin-mozjpeg');
 
 gulp.task('default', ['style', 'images', 'scripts'],  defaultTask);
+gulp.task('mac', ['style', 'imagesMac', 'scripts'],  macTask);
+gulp.task('clean', cleanTask);
 gulp.task('scripts', scriptsTask);
 gulp.task('scripts-dist', scriptsDistTask);
 gulp.task('images', imagesTask);
+gulp.task('imagesMac', imagesMacTask);
 gulp.task('style', styleTask);
 
 function defaultTask(done) {
+
+	gulp.watch('css/*.scss', function() { gulp.run('style'); });
+	gulp.watch('js/**/*.js', function() { gulp.run('scripts'); });
+	gulp.watch('img/**/*', function() { gulp.run('images'); });
 	done();
+}
+
+function macTask(done) {
+
+	gulp.watch('css/*.scss', function() { gulp.run('style'); });
+	gulp.watch('js/**/*.js', function() { gulp.run('scripts'); });
+	gulp.watch('img/**/*', function() { gulp.run('images'); });
+	done();
+}
+
+function cleanTask() {
+	gulp.src('dist/**/*', {read: false})
+		.pipe(gulpClean({force: true}));
 }
 
 function scriptsTask() {
@@ -34,30 +55,35 @@ function scriptsDistTask() {
 
 function imagesTask(){
 
-	gulp.src('img/icon.png')
+	gulp.src('img/*')
 		.pipe(gulp.dest('dist/img'));
 
-	gulp.src('img/*.jpg')
+
+	gulp.src('img/photos/*.jpg')
  		.pipe(imagemin({
 			progressive: true,
 			use: [pngquant()]
 		}))
 		.pipe(imagemin([imageminMozjpeg({
 			quality: 85
-	
-		})]))		
-		.pipe(gulp.dest('dist/img'));
+		})]).on('error', function(error){console.log('ah porra', error)}))		
+		.pipe(gulp.dest('dist/img/photos'));
 
-	gulp.src('img/thumbnails/*.jpg')
+	gulp.src('img/photos/thumbnails/*.jpg')
  		.pipe(imagemin({
 			progressive: true,
 			use: [pngquant()]
 		}))
 		.pipe(imagemin([imageminMozjpeg({
 			quality: 50
-	
 		})]))		
-		.pipe(gulp.dest('dist/img/thumbnails'));
+		.pipe(gulp.dest('dist/img/photos/thumbnails')); 
+}
+
+function imagesMacTask(){
+
+	gulp.src('img/**/*')
+		.pipe(gulp.dest('dist/img'));
 }
 
 function styleTask(){

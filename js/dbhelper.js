@@ -11,7 +11,7 @@ class DBHelper {
     //const port = 8000; // Change this to your server port
     const port = 1337; // Change this to your server port
     //return `http://localhost:${port}/data/restaurants.json`;
-    return `http://localhost:${port}/restaurants`;
+    return `http://localhost:${port}`;
   }
 
   static fetchRestaurantsFromCache() {
@@ -23,7 +23,7 @@ class DBHelper {
   }
 
   static fetchRestaurantsFromServer() {
-    return fetch(DBHelper.DATABASE_URL).then(function(response) {        
+    return fetch(`${DBHelper.DATABASE_URL}/restaurants`).then(function(response) {        
       return response.json().then(function(restaurantsFromServer) {
 
         //Cache the results
@@ -75,7 +75,7 @@ class DBHelper {
       }
     });
   }
-
+  
   /**
    * Fetch restaurants by a cuisine type with proper error handling.
    */
@@ -166,6 +166,43 @@ class DBHelper {
   }
 
   /**
+   * Fetch a review by its Restaurant ID.
+   */
+  static fetchReviewsByRestaurantId(restaurantId, callback) {
+
+    //First fetch from server
+    return fetch(`${DBHelper.DATABASE_URL}/reviews/?restaurant_id=${restaurantId}`).then(function(response) {        
+      return response.json().then(function(reviewsFromServer) {
+
+        //Cache the results
+        if (_db) {
+          let reviewsStore = _db.transaction('reviews', 'readwrite').objectStore('reviews');   
+          let reviewIndex = reviewsStore.index('serverId');    
+          reviewsFromServer.forEach(function (review) {
+
+            //check if the review is already in cache. If it is, update it. If not, add it
+            reviewIndex.get(IDBKeyRange.only(review.id)).then(function(reviewFromCache) {
+
+              if(reviewFromCache) {
+                review.idbInternalKey = reviewFromCache.idbInternalKey;
+              }
+              reviewsStore.put(review);
+            })
+          });
+        }
+        callback(null, reviewsFromServer);
+        return reviewsFromServer;
+      })
+    //if server is offline, fetch from cache
+    }).catch(function(errorResponse){
+      let reviewsIndex = _db.transaction('reviews', 'readwrite').objectStore('reviews').index('restaurantId');
+      reviewsIndex.getAll(parseInt(restaurantId)).then(function(reviewsFromCache) {
+        callback(null, reviewsFromCache);
+      })
+    });    
+  }  
+
+  /**
    * Restaurant page URL.
    */
   static urlForRestaurant(restaurant) {
@@ -176,14 +213,14 @@ class DBHelper {
    * Restaurant image URL.
    */
   static imageUrlForRestaurant(restaurant) {
-    return (`/dist/img/${restaurant.photograph}.jpg`);
+    return (`/dist/img/photos/${restaurant.photograph}.jpg`);
   }
 
     /**
    * Restaurant thumbnail image URL.
    */
   static thumbnailImageUrlForRestaurant(restaurant) {
-    return (`/dist/img/thumbnails/${restaurant.photograph}.jpg`);
+    return (`/dist/img/photos/thumbnails/${restaurant.photograph}.jpg`);
   }
 
   /**
@@ -200,4 +237,64 @@ class DBHelper {
     return marker;
   }
 
+  static setFavorite(restaurantId, isFavorite) {
+
+    //First update cache
+    var store = _db.transaction('restaurants', 'readwrite').objectStore('restaurants');
+
+    return store.get(restaurantId).then(function(restaurantFromCache) {
+
+      restaurantFromCache.is_favorite = isFavorite;
+
+      return store.put(restaurantFromCache).then(function() {
+
+        //try to update the server
+        return fetch(`${DBHelper.DATABASE_URL}/restaurants/${restaurantId}/?is_favorite=${isFavorite}`, { method: "PUT" })
+        .then(function(response) {
+          console.log('server updated');
+          return;
+        })
+        //if it fails, store the request to be tried later
+        .catch(function(response){
+          console.log('database offline, adding \'update favorite\' request to queue', response);
+          if (_db) {
+            var store = _db.transaction('favoriteRequestQueue', 'readwrite').objectStore('favoriteRequestQueue');        
+            store.put({timestamp: Date.now(), restaurantId: restaurantId, isFavorite: isFavorite});
+          }
+        });          
+      });
+    });        
+  }
+
+  static addReview(review) {
+
+    //set creation time
+    review.createdAt = new Date();
+
+    //First update cache
+    let store = _db.transaction('reviews', 'readwrite').objectStore('reviews');
+    return store.put(review).then(function(idbInternalKey) {
+
+      //try to update the server
+      return fetch(`${DBHelper.DATABASE_URL}/reviews`, { method: "POST", body: JSON.stringify(review) })
+      .then(function(reviewFromServer) {
+        //If success, update cache with object generated from the server
+        return reviewFromServer.json().then(function(reviewFromServer) {
+          reviewFromServer.idbInternalKey = idbInternalKey;
+          let store = _db.transaction('reviews', 'readwrite').objectStore('reviews');
+          return store.put(reviewFromServer);
+        })
+      })
+      //if it fails, store the request to be retried later
+      .catch(function(response){
+        console.log('database offline, adding \'add review\' request to queue', response);
+        if (_db) {
+          let store = _db.transaction('reviewRequestQueue', 'readwrite').objectStore('reviewRequestQueue');  
+          review.idbInternalKey = idbInternalKey;      
+          store.put({timestamp: Date.now(), review});
+        }
+      });          
+    });
+  }
 }
+
