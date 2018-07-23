@@ -190,14 +190,15 @@ class DBHelper {
             })
           });
         }
-        callback(null, reviewsFromServer);
-        return reviewsFromServer;
+        //callback(null, reviewsFromServer);
+        //return reviewsFromServer;
       })
     //if server is offline, fetch from cache
-    }).catch(function(errorResponse){
+    }).finally(function(response){
       let reviewsIndex = _db.transaction('reviews', 'readwrite').objectStore('reviews').index('restaurantId');
       reviewsIndex.getAll(parseInt(restaurantId)).then(function(reviewsFromCache) {
         callback(null, reviewsFromCache);
+        return reviewsFromCache;
       })
     });    
   }  
